@@ -42,13 +42,15 @@
 */
 
 #include "mcc_generated_files/mcc.h"
+#include "laserCommands.h"
 #include <stdio.h>
+
 /*
                          Main application
  */
 
 // 1ms interrupt
-void tmr1Handler(void);
+void tmr0Handler(void);
 
 void main(void)
 {
@@ -59,30 +61,40 @@ void main(void)
     // If using interrupts in PIC Mid-Range Compatibility Mode you need to enable the Global Interrupts
     // Use the following macros to:
     
+    __delay_ms(1000); //wait for debugger USB connection
     
-    printf("Main controller starting...");
+    printf("\n\nMain controller starting...\n");
     
-    TMR0_SetInterruptHandler(tmr1Handler);
+    TMR0_SetInterruptHandler(tmr0Handler);
     
+
     // Enable the Global Interrupts
     INTERRUPT_GlobalInterruptEnable();
 
     // Disable the Global Interrupts
     //INTERRUPT_GlobalInterruptDisable();
-
+    printf("Start laser...\n");
+    sendLaserCommand(commandsSend.open);
+    __delay_ms(100); //wait for laser feedback
+    printf("Answer: ");
+    while(UART1_is_rx_ready()){ // read laser feedback
+        printf("%X ",UART1_Read());
+    }
+            
+    UART1_Write(0xFF);
+    UART1_Write(0xFA);
+    UART1_Write(0x00);
     
     while (1)
     {
-        
+        if(!IO_S1_GetValue()){
+            IO_D3_SetHigh();
+        }
+        else IO_D3_SetLow();
     }
 }
 
-// define for printf
-void putch (char c){
-    UART2_Write(c);
-}
-
-void tmr1Handler(void){
+void tmr0Handler(void){
     volatile int counter;
     if(500 <= counter++){ // create 2Hz blinking hearth beat
         counter = 0;
