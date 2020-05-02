@@ -16,11 +16,13 @@
 void sendLaserCommand(const uint8_t *command){
     printf("Command send:");
     for(uint8_t i = 0; i<=15; i++){
-        //Debug
-        printf("%X ",*command);
-        
         UART1_Write(*command);
         command++;
     }
+    //Debug
+    for(uint8_t i = 0; i<=15; i++){
+        printf("%X ",*command);
+        command++;
+    }            
     printf("\n");
 }

@@ -51,7 +51,9 @@
 
 // 1ms interrupt
 void tmr0Handler(void);
-
+uint8_t feedback = 0;
+char buffer[1024];
+uint16_t bufferCount = 0;
 void main(void)
 {
     // Initialize the device
@@ -79,18 +81,46 @@ void main(void)
     printf("Answer: ");
     while(UART1_is_rx_ready()){ // read laser feedback
         printf("%X ",UART1_Read());
+        feedback = 1;
     }
-            
-    UART1_Write(0xFF);
-    UART1_Write(0xFA);
-    UART1_Write(0x00);
+    printf("\n");
     
+    if(feedback == 0 ){// If no feedback, reset laser
+        printf("Reset module...\n");        
+        sendLaserCommand(commandsSend.reset);
+
+        __delay_ms(100); //wait for laser feedback
+        printf("Answer: ");
+        while(UART1_is_rx_ready()){ // read laser feedback
+            printf("%X ",UART1_Read());
+            feedback = 1;
+        }   
+        printf("\n");
+        
+    }
+
+    printf("Start Measurement\n");        
+    sendLaserCommand(commandsSend.startContinuousMeas);
+    
+    
+            
     while (1)
     {
         if(!IO_S1_GetValue()){
             IO_D3_SetHigh();
         }
         else IO_D3_SetLow();
+        
+        //Print data received to the console
+        while(UART1_is_rx_ready()){ // read laser feedback
+            bufferCount++;
+            if(bufferCount >= 24) {
+                printf("\n");
+                bufferCount = 0;
+            }
+            printf("%X ",UART1_Read());
+        }
+        
     }
 }
 
