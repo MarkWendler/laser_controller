@@ -41,6 +41,7 @@
       <itemPath>main.c</itemPath>
       <itemPath>laserCommands.c</itemPath>
       <itemPath>laserInstances.c</itemPath>
+      <itemPath>laserStateMachines.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

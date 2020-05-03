@@ -12,7 +12,15 @@
 
 #include <xc.h> // include processor files - each processor file is guarded.  
 #include <stdint.h>
+#include "laserDescriptor.h"
 
+void taskModule (LaserModule *module);
+
+void activateLaser (LaserModule *module);
+void deactivateLaser (LaserModule *module);
+
+#define OPEN_ANSWER_LENGTH 16
+#define MEASURE_DATA_LENGTH 24
 
 const struct {
     uint8_t open[16];

@@ -56,7 +56,7 @@ uint8_t feedback = 0;
 char buffer[1024];
 uint16_t bufferCount = 0;
 
-extern laserModule module_1, module_2, module_3, module_4, module_5; //laserInstances
+extern LaserModule module_1, module_2, module_3, module_4, module_5; //laserInstances
 
 void main(void)
 {
@@ -67,7 +67,7 @@ void main(void)
     // If using interrupts in PIC Mid-Range Compatibility Mode you need to enable the Global Interrupts
     // Use the following macros to:
     
-    __delay_ms(1000); //wait for debugger USB connection
+    __delay_ms(500); //wait for debugger USB connection
     
     printf("\n\nMain controller starting...\n");
     
@@ -79,61 +79,61 @@ void main(void)
 
     // Disable the Global Interrupts
     //INTERRUPT_GlobalInterruptDisable();
-    printf("Start laser...\n");
-    //sendLaserCommand(commandsSend.open);
-    __delay_ms(100); //wait for laser feedback
-    printf("Answer: ");
-    while(UART1_is_rx_ready()){ // read laser feedback
-        printf("%X ",UART1_Read());
-        feedback = 1;
-    }
-    printf("\n");
-    
-    if(feedback == 0 ){// If no feedback, reset laser
-        printf("Reset module...\n");        
-        //sendLaserCommand(commandsSend.reset);
+    printf("Start laser controller...\n");
 
-        __delay_ms(100); //wait for laser feedback
-        printf("Answer: ");
-        while(UART1_is_rx_ready()){ // read laser feedback
-            printf("%X ",UART1_Read());
-            feedback = 1;
-        }   
-        printf("\n");
-        
-    }
-
-    printf("Start Measurement\n");        
-    //sendLaserCommand(commandsSend.startContinuousMeas);
-    
-    
-            
     while (1)
     {
+        taskModule(&module_1); //handle module 1
         if(!IO_S1_GetValue()){
             IO_D3_SetHigh();
         }
         else IO_D3_SetLow();
         
-        //Print data received to the console
-        while(UART1_is_rx_ready()){ // read laser feedback
-            bufferCount++;
-            if(bufferCount >= 24) {
-                printf("\n");
-                bufferCount = 0;
-            }
-            printf("%X ",UART1_Read());
-        }
-        
     }
 }
 
 void tmr0Handler(void){
-    volatile int counter;
+    static int counter;
+    static bool S2_Value,S2_Value_latch; 
+    static uint8_t DebounceCnt;
     if(500 <= counter++){ // create 2Hz blinking hearth beat
         counter = 0;
         IO_D2_Toggle();
     }
+    
+    S2_Value = !IO_S2_GetValue(); //Invert the logic -? pressed-> low
+    if (S2_Value) //If button already triggered
+    {
+        if (!S2_Value_latch)// not processed the press yet
+        {
+        DebounceCnt++;
+        
+        if (DebounceCnt >= 100 ) { //10ms
+            if (module_1.state == INITIALISED_OFF) { //If laser off
+                activateLaser(&module_1); //then start
+                IO_D4_SetHigh();
+            }
+            else if(module_1.state == MEASURE) //Start motor
+            {
+                deactivateLaser(&module_1);
+                IO_D4_SetLow();
+            }
+            S2_Value_latch = true; //Save the state
+            DebounceCnt = 0;
+            
+        }
+        }
+    } 
+    else { // if button released
+        if(S2_Value_latch){
+            DebounceCnt++;
+            if (DebounceCnt >= 100 ){
+                DebounceCnt = 0;
+                S2_Value_latch = false;
+            }
+        }
+    }
+    
     
 }
 
