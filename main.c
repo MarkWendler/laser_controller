@@ -43,6 +43,7 @@
 
 #include "mcc_generated_files/mcc.h"
 #include "laserCommands.h"
+#include "laserDescriptor.h"
 #include <stdio.h>
 
 /*
@@ -54,6 +55,9 @@ void tmr0Handler(void);
 uint8_t feedback = 0;
 char buffer[1024];
 uint16_t bufferCount = 0;
+
+extern laserModule module_1, module_2, module_3, module_4, module_5; //laserInstances
+
 void main(void)
 {
     // Initialize the device
@@ -76,7 +80,7 @@ void main(void)
     // Disable the Global Interrupts
     //INTERRUPT_GlobalInterruptDisable();
     printf("Start laser...\n");
-    sendLaserCommand(commandsSend.open);
+    //sendLaserCommand(commandsSend.open);
     __delay_ms(100); //wait for laser feedback
     printf("Answer: ");
     while(UART1_is_rx_ready()){ // read laser feedback
@@ -87,7 +91,7 @@ void main(void)
     
     if(feedback == 0 ){// If no feedback, reset laser
         printf("Reset module...\n");        
-        sendLaserCommand(commandsSend.reset);
+        //sendLaserCommand(commandsSend.reset);
 
         __delay_ms(100); //wait for laser feedback
         printf("Answer: ");
@@ -100,7 +104,7 @@ void main(void)
     }
 
     printf("Start Measurement\n");        
-    sendLaserCommand(commandsSend.startContinuousMeas);
+    //sendLaserCommand(commandsSend.startContinuousMeas);
     
     
             

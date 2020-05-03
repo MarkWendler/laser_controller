@@ -7,8 +7,8 @@
 
 // This is a guard condition so that contents of this file are not included
 // more than once.  
-#ifndef XC_HEADER_TEMPLATE_H
-#define	XC_HEADER_TEMPLATE_H
+#ifndef LASERDESCRIPTOR_H
+#define	LASERDESCRIPTOR_H
 
 #include <xc.h> // include processor files - each processor file is guarded.  
 
@@ -21,16 +21,33 @@ typedef enum {
             
 } moduleState;
 
-typedef struct laserModuleTag{
+typedef enum {
+    COMM_UNINITIALISED = 0, //laser module unitialised
+    SEND_INIT, //laser module communication OK and waiting to start measure
+    WAIT_INIT_ANSWER,    // Laser module
+    SEND_START_MEASURE,  //Module is calibrating
+    WAIT_START_FEEDBACK,
+    WAIT_MEASURE_DATA,
+    READ_DISTANCE,
+    IDLE                 //No communication ongoing
+            
+} communicationState;
+
+typedef struct {
+    uint8_t ID;
     moduleState state;
     uint16_t distance;
-    void (*dataSend)(uint8_t); //UART send function
-    uint8_t (*dataSend)(void); //UART receive function
-    
-    
+
+    struct {
+        communicationState state;
+        uint8_t receiveCount;
+        void (*dataSend)(uint8_t); //UART send function
+        uint8_t(*dataReceive)(void); //UART receive function        
+    } comm;
+
 } laserModule;
 
 laserModule laserTask(laserModule);
 
-#endif	/* XC_HEADER_TEMPLATE_H */
+#endif	/* LASERDESCRIPTOR_H */
 
